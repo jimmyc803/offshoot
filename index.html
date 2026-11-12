@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>offshoot.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a1430;
+    --bg-2: #13235a;
+    --ink: #e9eeff;
+    --ink-dim: #8f9cc9;
+    --ink-faint: #4b5a8f;
+    --accent: #7fe3ff;
+    --line: rgba(233, 238, 255, 0.14);
+    --gutter: clamp(16px, 4vw, 40px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- atmosphere ---------- */
+  .sky {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(60% 50% at 72% 38%, rgba(90, 140, 255, 0.28), transparent 70%),
+      radial-gradient(45% 40% at 18% 80%, rgba(40, 70, 180, 0.35), transparent 70%),
+      radial-gradient(120% 90% at 50% 0%, var(--bg-2), var(--bg) 70%);
+  }
+  .blinds {
+    position: fixed; z-index: 1;
+    right: -6vw; top: 8vh; width: 46vw; height: 56vh;
+    background: repeating-linear-gradient(172deg, rgba(150, 200, 255, 0.10) 0 14px, transparent 14px 34px);
+    filter: blur(6px);
+    transform: skewY(-6deg);
+    mask-image: radial-gradient(closest-side, #000 40%, transparent);
+    -webkit-mask-image: radial-gradient(closest-side, #000 40%, transparent);
+    animation: breathe 9s ease-in-out infinite;
+  }
+  @keyframes breathe { 50% { opacity: 0.55; transform: skewY(-6deg) translateY(10px); } }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  #dust { z-index: 2; }
+  #grain { z-index: 6; opacity: 0.11; mix-blend-mode: overlay; image-rendering: pixelated; }
+  .scan {
+    position: fixed; inset: 0; z-index: 7; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0 1px, transparent 1px 3px);
+    opacity: 0.35;
+  }
+  .vignette {
+    position: fixed; inset: 0; z-index: 5; pointer-events: none;
+    background: radial-gradient(120% 100% at 50% 50%, transparent 55%, rgba(2, 6, 20, 0.75));
+  }
+
+  /* ---------- chrome ---------- */
+  .frame {
+    position: relative; z-index: 4;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 0 var(--gutter);
+  }
+  header, footer {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; padding: 18px 0;
+  }
+  header { border-bottom: 1px solid var(--line); }
+  footer { border-top: 1px solid var(--line); color: var(--ink-dim); }
+  .brand { font-family: "Silkscreen", monospace; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .brand i { width: 7px; height: 7px; background: var(--accent); display: inline-block; box-shadow: 0 0 10px var(--accent); }
+  .meta { display: flex; gap: 22px; color: var(--ink-dim); }
+  .meta button {
+    font: inherit; color: inherit; background: none; border: 0; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .meta button:hover { color: var(--ink); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-faint); }
+  .on .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  kbd { font: inherit; color: var(--ink); border: 1px solid var(--line); padding: 1px 6px; margin-right: 4px; }
+
+  /* ---------- stage ---------- */
+  main {
+    display: flex; flex-direction: column; justify-content: center;
+    position: relative;
+  }
+  .small {
+    font-family: "Silkscreen", monospace;
+    font-size: clamp(14px, 1.6vw, 20px);
+    color: var(--ink-dim);
+    margin: 8px 0 6px;
+  }
+  .slot {
+    position: relative;
+    font-family: "Silkscreen", monospace;
+    line-height: 1;
+    white-space: nowrap;
+    height: 1.1em;
+    overflow: hidden;
+  }
+  .slot .layer.main { top: 0.05em; }
+  .slot .layer.main.roll { animation: roll var(--d, 80ms) cubic-bezier(.3,.7,.4,1); }
+  @keyframes roll {
+    from { transform: translateY(-85%); filter: blur(3px); opacity: 0.5; }
+    to   { transform: none; filter: none; opacity: 1; }
+  }
+  .slot.what { font-size: clamp(30px, 6.2vw, 84px); }
+  .slot.who  { font-size: clamp(34px, 8.2vw, 116px); }
+  .layer { position: absolute; left: 0; top: 0; will-change: transform, opacity; }
+  .layer.main { text-shadow: 0 0 18px rgba(127, 227, 255, 0.35); }
+  .layer.ghost { pointer-events: none; }
+  .slot.landed .layer.main { animation: land 0.5s cubic-bezier(.2,.9,.3,1.4); }
+  @keyframes land {
+    0% { transform: translateY(-0.08em) scaleY(1.12); filter: brightness(1.8); }
+    100% { transform: none; filter: none; }
+  }
+  .echo-pad { height: 28px; }
+
+  .status {
+    position: absolute; right: 0; bottom: 18px;
+    display: flex; align-items: center; gap: 10px;
+    font-family: "Silkscreen", monospace; font-size: 12px; color: var(--ink-dim);
+    opacity: 0; transition: opacity .3s;
+  }
+  .spinning .status { opacity: 1; }
+  .spinner { width: 10px; height: 10px; border: 1.5px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: rot .6s linear infinite; }
+  @keyframes rot { to { transform: rotate(360deg); } }
+
+  .actions {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    opacity: 0; transform: translateY(6px); transition: opacity .4s .2s, transform .4s .2s;
+  }
+  .ready .actions { opacity: 1; transform: none; }
+  .spinning .actions { opacity: 0; transition-delay: 0s; }
+  .actions button {
+    font: inherit; color: var(--ink-dim); background: none; border: 1px solid var(--line);
+    padding: 6px 10px; cursor: pointer;
+  }
+  .actions button:hover { color: var(--ink); border-color: var(--ink-dim); }
+  .actions button.locked { color: var(--accent); border-color: var(--accent); }
+
+  .cursor {
+    position: fixed; z-index: 8; pointer-events: none;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 14px 3px rgba(127,227,255,.6);
+    transform: translate(-50%, -50%);
+    transition: width .15s, height .15s;
+    left: -40px; top: -40px;
+  }
+  body:active .cursor { width: 16px; height: 16px; }
+  @media (hover: none) { .cursor { display: none; } }
+
+  @media (max-width: 600px) {
+    .hide-sm { display: none; }
+    .echo-pad { height: 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .blinds { animation: none; } }
+</style>
+</head>
+<body>
+  <div class="sky"></div>
+  <div class="blinds"></div>
+  <canvas id="dust"></canvas>
+  <div class="vignette"></div>
+  <canvas id="grain"></canvas>
+  <div class="scan"></div>
+  <div class="cursor" id="cursor"></div>
+
+  <div class="frame" id="frame">
+    <header>
+      <div class="brand"><i></i>offshoot.</div>
+      <div class="meta">
+        <button id="sound" type="button"><span class="dot"></span><span id="soundLabel">sound off</span></button>
+        <span class="hide-sm" id="count">no. 000</span>
+      </div>
+    </header>
+
+    <main>
+      <div class="small">build a</div>
+      <div class="slot what" id="what"></div>
+      <div class="small">for</div>
+      <div class="slot who" id="who"></div>
+      <div class="echo-pad"></div>
+      <div class="actions">
+        <button type="button" id="copy">copy idea</button>
+        <button type="button" id="lockWhat">lock what</button>
+        <button type="button" id="lockWho">lock who</button>
+      </div>
+      <div class="status"><span>rolling your offshoot</span><span class="spinner"></span></div>
+    </main>
+
+    <footer>
+      <span><kbd>space</kbd>or click anywhere to spin</span>
+      <span class="hide-sm">small odds. strange ideas. go make one.</span>
+    </footer>
+  </div>
+
+<script>
+(() => {
+  const WHAT = [
+    "web app", "chrome extension", "cli tool", "discord bot", "mobile app", "browser game",
+    "slack bot", "api", "menu bar app", "vs code plugin", "telegram bot", "figma plugin",
+    "newsletter", "dashboard", "ai agent", "hardware gadget", "screensaver", "watch app",
+    "text adventure", "zine maker", "raycast command", "rss reader", "voice assistant",
+    "obsidian plugin", "widget", "marketplace", "map", "keyboard firmware", "spreadsheet"
+  ];
+  const WHO = [
+    "podcast editors", "beekeepers", "night nurses", "chess coaches", "tattoo artists",
+    "dog walkers", "landlords", "new teachers", "drummers", "climbers", "birders",
+    "sous chefs", "librarians", "ham radio nerds", "wedding djs", "plant parents",
+    "skate shops", "speedrunners", "thrift flippers", "crossword setters", "ferry captains",
+    "insomniacs", "grad students", "barbers", "retirees", "astronomers",
+    "food trucks", "knitters", "indie bands", "rock hounds", "cyclists", "twins"
+  ];
+  const GLYPHS = "!<>-_/[]{}=+*^?#%&$@01";
+
+  const $ = (id) => document.getElementById(id);
+  const frame = $("frame");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const rand = (arr) => arr[(Math.random() * arr.length) | 0];
+
+  // ---------- slot with echo trail ----------
+  function makeSlot(el, words, ghosts) {
+    const ghostEls = [];
+    for (let i = 0; i < ghosts; i++) {
+      const g = document.createElement("div");
+      g.className = "layer ghost";
+      g.style.opacity = 0;
+      el.appendChild(g);
+      ghostEls.push(g);
+    }
+    const main = document.createElement("div");
+    main.className = "layer main";
+    el.appendChild(main);
+
+    const trail = [];
+    let current = rand(words);
+    main.textContent = current;
+
+    function render(text, energy) {
+      main.textContent = text;
+      trail.unshift(text);
+      if (trail.length > ghosts + 1) trail.length = ghosts + 1;
+      ghostEls.forEach((g, i) => {
+        const t = trail[i + 1];
+        if (!t) { g.style.opacity = 0; return; }
+        const k = i + 1;
+        g.textContent = t;
+        g.style.transform = `translateY(${k * 0.34}em)`;
+        g.style.opacity = (energy * 0.6 / k).toFixed(3);
+        g.style.filter = `blur(${(k * 0.7 * energy).toFixed(2)}px)`;
+      });
+    }
+
+    function fadeTrail() {
+      ghostEls.forEach((g) => {
+        g.style.transition = "opacity .9s ease, transform .9s ease";
+        g.style.opacity = 0;
+        g.style.transform = "translateY(0)";
+      });
+      setTimeout(() => ghostEls.forEach((g) => (g.style.transition = "")), 950);
+      trail.length = 0;
+    }
+
+    function scramble(target, p) {
+      let out = "";
+      for (let i = 0; i < target.length; i++) {
+        out += (target[i] === " " || i / target.length < p) ? target[i] : rand(GLYPHS);
+      }
+      return out;
+    }
+
+    function spin(duration, locked) {
+      return new Promise((resolve) => {
+        if (locked) { resolve(current); return; }
+        let pick;
+        do { pick = rand(words); } while (pick === current);
+        if (reduce) { current = pick; main.textContent = pick; resolve(pick); return; }
+
+        el.classList.remove("landed");
+        const start = performance.now();
+        let last = 0;
+        function step(now) {
+          const t = Math.min(1, (now - start) / duration);
+          const interval = 40 + Math.pow(t, 2.4) * 220; // slows toward the end
+          if (t < 1) {
+            if (now - last > interval) {
+              last = now;
+              main.textContent = rand(words);
+              main.style.setProperty("--d", Math.round(interval) + "ms");
+              main.classList.remove("roll");
+              void main.offsetWidth;
+              main.classList.add("roll");
+              tick();
+            }
+            requestAnimationFrame(step);
+            return;
+          }
+          // scramble-resolve into the final word
+          const s2 = performance.now();
+          (function settle(n) {
+            const p = Math.min(1, (n - s2) / 260);
+            main.textContent = scramble(pick, p);
+            if (p < 1) { requestAnimationFrame(settle); return; }
+            current = pick;
+            main.textContent = pick;
+            main.classList.remove("roll");
+            void el.offsetWidth;
+            el.classList.add("landed");
+            thunk();
+            resolve(pick);
+          })(s2);
+        }
+        requestAnimationFrame(step);
+      });
+    }
+
+    return { spin, get value() { return current; } };
+  }
+
+  const what = makeSlot($("what"), WHAT, 0);
+  const who = makeSlot($("who"), WHO, 0);
+
+  // ---------- sound ----------
+  let ctx = null, soundOn = false;
+  function blip(freq, dur, gain, type = "square") {
+    if (!soundOn || !ctx) return;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(gain, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    o.connect(g).connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + dur);
+  }
+  const tick = () => blip(900 + Math.random() * 700, 0.03, 0.025);
+  const thunk = () => { blip(180, 0.18, 0.08, "triangle"); blip(360, 0.12, 0.03); };
+  $("sound").addEventListener("click", (e) => {
+    e.stopPropagation();
+    soundOn = !soundOn;
+    if (soundOn) {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      ctx.resume();
+    }
+    $("sound").classList.toggle("on", soundOn);
+    $("soundLabel").textContent = soundOn ? "sound on" : "sound off";
+  });
+
+  // ---------- spin control ----------
+  let n = 0, busy = false;
+  const locks = { what: false, who: false };
+  async function go() {
+    if (busy) return;
+    busy = true;
+    frame.classList.add("spinning");
+    frame.classList.remove("ready");
+    await Promise.all([what.spin(1300, locks.what), who.spin(2100, locks.who)]);
+    n++;
+    $("count").textContent = "no. " + String(n).padStart(3, "0");
+    frame.classList.remove("spinning");
+    frame.classList.add("ready");
+    busy = false;
+  }
+
+  document.body.addEventListener("click", (e) => { if (!e.target.closest("button")) go(); });
+  addEventListener("keydown", (e) => {
+    if (e.code === "Space" || e.code === "Enter") { e.preventDefault(); go(); }
+  });
+
+  function toggleLock(key, btn) {
+    locks[key] = !locks[key];
+    btn.textContent = (locks[key] ? "unlock " : "lock ") + key;
+    btn.classList.toggle("locked", locks[key]);
+  }
+  $("lockWhat").addEventListener("click", (e) => { e.stopPropagation(); toggleLock("what", e.currentTarget); });
+  $("lockWho").addEventListener("click", (e) => { e.stopPropagation(); toggleLock("who", e.currentTarget); });
+  $("copy").addEventListener("click", async (e) => {
+    e.stopPropagation();
+    const btn = e.currentTarget;
+    try {
+      await navigator.clipboard.writeText(`build a ${what.value} for ${who.value}`);
+      btn.textContent = "copied";
+    } catch { btn.textContent = "copy failed"; }
+    setTimeout(() => (btn.textContent = "copy idea"), 1200);
+  });
+
+  // ---------- cursor glow ----------
+  const cur = $("cursor");
+  addEventListener("pointermove", (e) => { cur.style.left = e.clientX + "px"; cur.style.top = e.clientY + "px"; });
+
+  // ---------- dust ----------
+  const dust = $("dust"), dctx = dust.getContext("2d");
+  let W, H, motes = [];
+  function size() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    dust.width = W * dpr; dust.height = H * dpr;
+    dctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    motes = Array.from({ length: Math.round((W * H) / 9000) }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.6 + 0.3,
+      vx: (Math.random() - 0.5) * 0.12, vy: -Math.random() * 0.18 - 0.03,
+      a: Math.random() * 0.6 + 0.15, p: Math.random() * Math.PI * 2
+    }));
+  }
+  size(); addEventListener("resize", size);
+  function drawDust(t) {
+    dctx.clearRect(0, 0, W, H);
+    const boost = frame.classList.contains("spinning") ? 3 : 1;
+    for (const m of motes) {
+      m.x += m.vx * boost; m.y += m.vy * boost;
+      if (m.y < -4) { m.y = H + 4; m.x = Math.random() * W; }
+      if (m.x < -4) m.x = W + 4; else if (m.x > W + 4) m.x = -4;
+      const tw = 0.6 + 0.4 * Math.sin(t / 900 + m.p);
+      dctx.fillStyle = `rgba(200,225,255,${(m.a * tw).toFixed(3)})`;
+      dctx.beginPath(); dctx.arc(m.x, m.y, m.r, 0, Math.PI * 2); dctx.fill();
+    }
+    if (!reduce) requestAnimationFrame(drawDust);
+  }
+  requestAnimationFrame(drawDust);
+
+  // ---------- film grain ----------
+  const grain = $("grain"), gctx = grain.getContext("2d");
+  grain.width = 220; grain.height = 220;
+  const img = gctx.createImageData(220, 220);
+  function drawGrain() {
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = (Math.random() * 255) | 0;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255;
+    }
+    gctx.putImageData(img, 0, 0);
+    if (!reduce) setTimeout(drawGrain, 70);
+  }
+  drawGrain();
+
+  setTimeout(go, 350);
+})();
+</script>
+</body>
+</html>
