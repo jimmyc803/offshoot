@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>offshoot logo</title>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg: #0a1430; --bg-2: #13235a; --ink: #e9eeff; --dim: #8f9cc9; --accent: #7fe3ff; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: var(--bg); overflow: hidden; }
+  .canvas {
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(55% 55% at 70% 30%, rgba(90, 140, 255, 0.30), transparent 70%),
+      radial-gradient(120% 90% at 50% 0%, var(--bg-2), var(--bg) 75%);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .canvas::after {
+    content: ""; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 4px);
+  }
+  .sprite { display: grid; grid-template-columns: repeat(12, var(--px)); grid-auto-rows: var(--px); }
+  .sprite i { display: block; }
+  .w { background: var(--ink); }
+  .d { background: #4b5a8f; }
+  .c { background: var(--accent); box-shadow: 0 0 calc(var(--px) * 0.8) rgba(127, 227, 255, 0.55); }
+
+  /* square icon 1024 */
+  #icon { width: 1024px; height: 1024px; --px: 64px; }
+
+  /* wordmark 1200x630 */
+  #mark { width: 1200px; height: 630px; gap: 40px; --px: 28px; }
+  .words { font-family: "Silkscreen", monospace; color: var(--ink); }
+  .words h1 { font-size: 96px; font-weight: 400; line-height: 1; text-shadow: 0 0 22px rgba(127, 227, 255, 0.35); }
+  .words p { font-family: "JetBrains Mono", monospace; font-size: 28px; color: var(--dim); margin-top: 22px; }
+  .words p b { color: var(--accent); font-weight: 400; }
+</style>
+</head>
+<body>
+  <div class="canvas" id="icon"><div class="sprite"></div></div>
+  <div class="canvas" id="mark">
+    <div class="sprite"></div>
+    <div class="words">
+      <h1>offshoot.</h1>
+      <p>build a <b>___</b> for <b>___</b></p>
+    </div>
+  </div>
+<script>
+  // 12x12 pixel sprout: white main stem + leaf, cyan offshoot branch ending in a bud
+  const MAP = [
+    "............",
+    "...w...w....",
+    "...ww.ww....",
+    "....www.....",
+    ".....w..cc..",
+    ".....w..cc..",
+    ".....w...c..",
+    ".....w...c..",
+    ".....wcccc..",
+    ".....w......",
+    ".....w......",
+    "...ddddd....",
+  ];
+  document.querySelectorAll(".sprite").forEach((s) => {
+    for (const row of MAP) for (const ch of row) {
+      const i = document.createElement("i");
+      if (ch !== ".") i.className = ch;
+      s.appendChild(i);
+    }
+  });
+  const only = location.hash.slice(1);
+  if (only) document.querySelectorAll(".canvas").forEach((c) => { if (c.id !== only) c.remove(); });
+</script>
+</body>
+</html>
